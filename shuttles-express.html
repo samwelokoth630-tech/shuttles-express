@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shuttles Express | Book Your Seat</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--text:#1d2530;--muted:#66707d;--brand:#0a7d4f;--brand-d:#07603c;--seat:#e3e8ee;--seat-sel:#0a7d4f;--seat-taken:#c7ced8;--line:#dde2e8}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#11161c;--card:#1a2129;--text:#e8edf2;--muted:#9aa6b4;--brand:#22b07a;--brand-d:#1a9466;--seat:#2a333e;--seat-sel:#22b07a;--seat-taken:#3a4450;--line:#2b3440}}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);padding-bottom:env(safe-area-inset-bottom,0px)}
+header{background:var(--brand);color:#fff;padding:calc(1rem + env(safe-area-inset-top,0px)) 1.25rem 1rem}
+header h1{margin:0;font-size:1.35rem}
+header p{margin:.2rem 0 0;opacity:.9;font-size:.9rem}
+main{max-width:920px;margin:0 auto;padding:1rem;display:grid;gap:1rem;grid-template-columns:1fr}
+@media (min-width:800px){main{grid-template-columns:1.2fr 1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.1rem}
+h2{font-size:1.05rem;margin:0 0 .8rem}
+label{display:block;font-size:.85rem;color:var(--muted);margin:.6rem 0 .25rem}
+select,input{width:100%;padding:.6rem .7rem;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);font:inherit}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.bus{border:2px solid var(--line);border-radius:18px 18px 10px 10px;padding:2.2rem .9rem .9rem;position:relative;max-width:240px;margin:.4rem auto}
+.bus::before{content:"FRONT";position:absolute;top:.6rem;left:0;right:0;text-align:center;font-size:.7rem;color:var(--muted);letter-spacing:.1em}
+.seat-row{display:flex;justify-content:center;gap:.4rem;margin:.35rem 0}
+.aisle{width:1.2rem}
+.seat{width:2.3rem;height:2.3rem;border-radius:8px 8px 4px 4px;border:1px solid var(--line);background:var(--seat);color:var(--text);font:600 .8rem system-ui,sans-serif;cursor:pointer}
+.seat.sel{background:var(--seat-sel);color:#fff;border-color:var(--seat-sel)}
+.seat.taken{background:var(--seat-taken);color:var(--muted);cursor:not-allowed;text-decoration:line-through}
+.seat:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.legend{font-size:.8rem;color:var(--muted);display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin:.8rem 0 0}
+.key{display:inline-block;width:.9rem;height:.9rem;border-radius:3px;background:var(--seat);border:1px solid var(--line);margin-left:.5rem}
+.key.sel{background:var(--seat-sel);border-color:var(--seat-sel)}
+.key.taken{background:var(--seat-taken)}
+.summary{margin:1rem 0;padding:.8rem;border-radius:10px;background:var(--bg);font-size:.92rem;line-height:1.6}
+.btn{width:100%;padding:.8rem;border:0;border-radius:10px;background:var(--brand);color:#fff;font:600 1rem system-ui,sans-serif;cursor:pointer}
+.btn:hover{background:var(--brand-d)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.status{min-height:1.4rem;font-size:.9rem;margin:.7rem 0 0}
+.status.err{color:#c0392b}
+.status.ok{color:var(--brand)}
+.booking{border:1px solid var(--line);border-radius:10px;padding:.7rem .9rem;margin-top:.6rem;font-size:.9rem}
+.muted{color:var(--muted);font-size:.9rem}
+.ref{font-weight:700;color:var(--brand);margin-right:.5rem}
+footer{max-width:920px;margin:0 auto;padding:0 1rem 2rem;font-size:.78rem;color:var(--muted)}
+.methods{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.3rem}
+.method{display:flex;align-items:center;gap:.4rem;margin:0;padding:.55rem .75rem;border:1px solid var(--line);border-radius:10px;color:var(--text);font-size:.9rem;cursor:pointer}
+.method input{width:auto;margin:0}
+.pochi{margin-top:.8rem;padding:.8rem;border-radius:10px;background:var(--bg);font-size:.92rem}
+.pochi p{margin:0 0 .4rem;font-weight:600}
+.receipt{border:1px dashed var(--line);border-radius:12px;padding:1rem;margin-top:1rem;background:var(--bg)}
+.receipt-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:.6rem;margin-bottom:.6rem}
+.receipt-head span{color:var(--muted);font-size:.85rem}
+.receipt dl{display:grid;grid-template-columns:auto 1fr;gap:.35rem .9rem;margin:0;font-size:.9rem}
+.receipt dt{color:var(--muted)}
+.receipt dd{margin:0;text-align:right;font-weight:500;word-break:break-word}
+.receipt dd.ref{color:var(--brand);font-weight:700}
+.receipt-actions{margin-top:.9rem}
+.btn-ghost{width:100%;padding:.6rem;border:1px solid var(--brand);border-radius:10px;background:transparent;color:var(--brand);font:600 .9rem system-ui,sans-serif;cursor:pointer}
+@media print{body *{visibility:hidden}.receipt,.receipt *{visibility:visible}.receipt{position:absolute;left:0;top:0;width:100%;border:0}.receipt-actions{display:none}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Shuttles Express</h1>
+  <p>Book your seat from Nairobi &middot; Pay with M-Pesa</p>
+</header>
+
+<main>
+  <section class="card">
+    <h2>1. Trip</h2>
+    <label for="route">Route</label>
+    <select id="route"></select>
+    <div class="row">
+      <div><label for="date">Travel date</label><input type="date" id="date"></div>
+      <div><label for="time">Departure</label><select id="time"></select></div>
+    </div>
+
+    <h2 style="margin-top:1.2rem">2. Choose seats</h2>
+    <div class="bus"><div id="seatmap"></div></div>
+    <p class="legend">
+      <span>Available<span class="key"></span></span>
+      <span>Selected<span class="key sel"></span></span>
+      <span>Taken<span class="key taken"></span></span>
+    </p>
+  </section>
+
+  <section class="card">
+    <h2>3. Passenger and payment</h2>
+    <label for="name">Passenger name</label>
+    <input id="name" autocomplete="name">
+    <label>Payment method</label>
+    <div class="methods">
+      <label class="method"><input type="radio" name="method" value="M-Pesa" checked> M-Pesa</label>
+      <label class="method"><input type="radio" name="method" value="Airtel Money"> Airtel Money</label>
+      <label class="method"><input type="radio" name="method" value="Pochi la Biashara"> Pochi la Biashara</label>
+    </div>
+    <label for="phone">Mobile money phone number</label>
+    <input id="phone" inputmode="tel" placeholder="0712 345 678" autocomplete="tel">
+    <div id="pochi-box" class="pochi" hidden>
+      <p id="pochi-text"></p>
+      <label for="code">M-Pesa confirmation code</label>
+      <input id="code" placeholder="e.g. QGH7K2L9MZ" autocapitalize="characters" autocomplete="off">
+    </div>
+    <div class="summary" id="summary"></div>
+    <button id="pay" class="btn" disabled>Pay now</button>
+    <p id="status" class="status" role="status"></p>
+    <div id="receipt"></div>
+  </section>
+
+  <section class="card" style="grid-column:1/-1">
+    <h2>Your bookings</h2>
+    <div id="bookings"></div>
+  </section>
+</main>
+
+<footer>
+  Prototype: mobile money payments are simulated, and seat availability is saved on this device only, until the app is connected to the M-Pesa (Daraja) API and a booking server.
+</footer>
+
+<script>
+const ROUTES = [
+  { to: "Narok", fare: 500 },
+  { to: "Nakuru", fare: 500 },
+  { to: "Kisii", fare: 1500 },
+  { to: "Kakamega", fare: 1600 },
+  { to: "Kisumu", fare: 1600 },
+  { to: "Homa Bay", fare: 1600 },
+  { to: "Migori", fare: 1700 },
+  { to: "Busia", fare: 1700 },   // notes also list 1500: confirm
+  { to: "Siaya", fare: null }    // fare not set yet: booking blocked until added
+];
+const TIMES = ["6:00 AM","7:30 AM","9:00 AM","6:00 PM","7:30 PM","8:30 PM","9:00 PM","10:30 PM"];
+const SEAT_COUNT = 18; // 6 rows of 3 seats: 2 + aisle + 1
+
+const $ = s => document.querySelector(s);
+const money = n => "KES " + n.toLocaleString("en-KE");
+const tripKey = t => [t.from, t.to, t.date, t.time].join("|");
+const readJSON = (k, fb) => { try { return JSON.parse(localStorage.getItem(k)) ?? fb; } catch { return fb; } };
+const writeJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+
+let picked = new Set();
+let bookings = readJSON("se_bookings", []);
+
+const trip = () => {
+  const [from, to] = $("#route").value.split("|");
+  return { from, to, date: $("#date").value, time: $("#time").value };
+};
+const fareOf = t => {
+  const dest = t.from === "Nairobi" ? t.to : t.from;
+  return ROUTES.find(r => r.to === dest).fare;
+};
+const takenSeats = t => (readJSON("se_seats", {})[tripKey(t)]) || [];
+
+function say(text, kind = "") {
+  const el = $("#status");
+  el.textContent = text;
+  el.className = "status " + kind;
+}
+
+function renderSeats() {
+  const t = trip();
+  const taken = takenSeats(t);
+  picked = new Set([...picked].filter(n => !taken.includes(n)));
+
+  const map = $("#seatmap");
+  map.innerHTML = "";
+  for (let r = 0; r < SEAT_COUNT / 3; r++) {
+    const row = document.createElement("div");
+    row.className = "seat-row";
+    [3 * r + 1, 3 * r + 2, null, 3 * r + 3].forEach(n => {
+      if (n === null) {
+        const a = document.createElement("span");
+        a.className = "aisle";
+        row.append(a);
+        return;
+      }
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "seat";
+      b.textContent = n;
+      b.setAttribute("aria-label", "Seat " + n);
+      if (taken.includes(n)) {
+        b.disabled = true;
+        b.classList.add("taken");
+      } else {
+        if (picked.has(n)) {
+          b.classList.add("sel");
+          b.setAttribute("aria-pressed", "true");
+        }
+        b.onclick = () => {
+          if (picked.has(n)) picked.delete(n); else picked.add(n);
+          renderSeats();
+        };
+      }
+      row.append(b);
+    });
+    map.append(row);
+  }
+  updateSummary();
+}
+
+function updateSummary() {
+  const t = trip();
+  const seats = [...picked].sort((a, b) => a - b);
+  const fare = fareOf(t);
+  const total = fare ? fare * seats.length : 0;
+  $("#summary").innerHTML = seats.length
+    ? `<strong>${t.from} to ${t.to}</strong> &middot; ${t.date || "pick a date"} &middot; ${t.time}<br>
+       Seats: ${seats.join(", ")} (${seats.length})<br>
+       Total: <strong>${fare ? money(total) : "Fare to be confirmed"}</strong>`
+    : "Choose your seat(s) to see your total.";
+  $("#pay").disabled = !(seats.length && fare && t.date);
+  updatePochi();
+}
+
+function renderBookings() {
+  const box = $("#bookings");
+  box.innerHTML = "";
+  if (!bookings.length) {
+    box.innerHTML = '<p class="muted">No bookings yet.</p>';
+    return;
+  }
+  bookings.forEach(b => {
+    const d = document.createElement("div");
+    d.className = "booking";
+    const ref = document.createElement("span");
+    ref.className = "ref";
+    ref.textContent = b.ref;
+    const meta = document.createElement("div");
+    meta.className = "muted";
+    meta.textContent = `${b.name} · ${b.from} to ${b.to} · ${b.date} ${b.time} · Seats ${b.seats.join(", ")} · ${money(b.total)}`;
+    d.append(ref, meta);
+    box.append(d);
+  });
+}
+
+function showReceipt(b, phone) {
+  const issued = new Date().toLocaleString("en-KE", { dateStyle: "medium", timeStyle: "short" });
+  const el = $("#receipt");
+  el.innerHTML = "";
+  const card = document.createElement("div");
+  card.className = "receipt";
+
+  const head = document.createElement("div");
+  head.className = "receipt-head";
+  head.innerHTML = "<strong>Shuttles Express</strong><span>Payment receipt</span>";
+
+  const list = document.createElement("dl");
+  const rows = [
+    ["Booking ref", b.ref, true],
+    ["Passenger", b.name],
+    ["Route", b.from + " to " + b.to],
+    ["Travel date", b.date],
+    ["Departure", b.time],
+    ["Seats", b.seats.join(", ")],
+    ["Paid via", b.method === "Pochi la Biashara" ? "Pochi la Biashara 0184286867" : b.method + " " + phone],
+    ...(b.code ? [["M-Pesa code", b.code]] : []),
+    ["Amount paid", money(b.total)],
+    ["Issued", issued]
+  ];
+  rows.forEach(([k, v, isRef]) => {
+    const dt = document.createElement("dt");
+    dt.textContent = k;
+    const dd = document.createElement("dd");
+    dd.textContent = v;
+    if (isRef) dd.className = "ref";
+    list.append(dt, dd);
+  });
+
+  const actions = document.createElement("div");
+  actions.className = "receipt-actions";
+  const note = document.createElement("p");
+  note.className = "muted";
+  note.style.margin = ".5rem 0 0";
+  note.setAttribute("role", "status");
+  const dlBtn = document.createElement("button");
+  dlBtn.type = "button";
+  dlBtn.className = "btn-ghost";
+  dlBtn.textContent = "Download receipt";
+  dlBtn.onclick = () => downloadReceipt(b, phone, issued, note);
+  actions.append(dlBtn, note);
+
+  card.append(head, list, actions);
+  el.append(card);
+}
+
+function receiptText(b, phone, issued) {
+  return [
+    "SHUTTLES EXPRESS - PAYMENT RECEIPT",
+    "----------------------------------",
+    `Booking ref:  ${b.ref}`,
+    `Passenger:    ${b.name}`,
+    `Route:        ${b.from} to ${b.to}`,
+    `Travel date:  ${b.date}`,
+    `Departure:    ${b.time}`,
+    `Seats:        ${b.seats.join(", ")}`,
+    `Paid via:     ${b.method === "Pochi la Biashara" ? "Pochi la Biashara 0184286867" : b.method + " " + phone}`,
+    ...(b.code ? [`M-Pesa code:  ${b.code}`] : []),
+    `Amount paid:  ${money(b.total)}`,
+    `Issued:       ${issued}`,
+    "",
+    "Thank you for travelling with Shuttles Express."
+  ].join("\n") + "\n";
+}
+
+async function downloadReceipt(b, phone, issued, note) {
+  note.textContent = "";
+  let downloads = null;
+  try {
+    downloads = window.claude ? await window.claude.use("downloads") : null;
+  } catch { downloads = null; }
+  if (!downloads) {
+    note.textContent = "Downloads are not available in this view.";
+    return;
+  }
+  try {
+    await downloads.save({
+      filename: `receipt-${b.ref}.txt`,
+      data: receiptText(b, phone, issued)
+    });
+    note.textContent = "Receipt saved.";
+  } catch (err) {
+    note.textContent = err && err.code === "declined"
+      ? "Download cancelled."
+      : "Could not save the receipt. Please try again.";
+  }
+}
+
+$("#pay").onclick = async () => {
+  const name = $("#name").value.trim();
+  const method = document.querySelector('input[name="method"]:checked').value;
+  const code = $("#code").value.trim().toUpperCase();
+  const phone = $("#phone").value.replace(/[\s-]/g, "");
+  const t = trip();
+  const seats = [...picked].sort((a, b) => a - b);
+  const fare = fareOf(t);
+
+  if (!name) return say("Enter the passenger name.", "err");
+  if (!/^(07|01)\d{8}$|^254[17]\d{8}$/.test(phone)) return say("Enter a valid M-Pesa number, e.g. 0712 345 678.", "err");
+  if (method === "Pochi la Biashara" && !/^[A-Z0-9]{10}$/.test(code)) return say("Enter the 10-character M-Pesa confirmation code from your Pochi payment.", "err");
+  if (!t.date) return say("Choose a travel date.", "err");
+  if (!seats.length || !fare) return say("Choose your seats.", "err");
+
+  $("#pay").disabled = true;
+  if (method === "Pochi la Biashara") say("Checking your Pochi payment...");
+  else say("Sending " + method + " prompt to " + phone + ". Enter your PIN on your phone...");
+  await new Promise(r => setTimeout(r, 2500)); // simulated until Daraja is connected
+
+  const all = readJSON("se_seats", {});
+  const k = tripKey(t);
+  const taken = all[k] || [];
+  if (seats.some(n => taken.includes(n))) {
+    say("Some of those seats were just taken. Please choose again.", "err");
+    renderSeats();
+    return;
+  }
+
+  all[k] = [...taken, ...seats];
+  writeJSON("se_seats", all);
+  const ref = "SX" + Date.now().toString(36).toUpperCase().slice(-6);
+  bookings.unshift({ ref, name, method, code: method === "Pochi la Biashara" ? code : "", from: t.from, to: t.to, date: t.date, time: t.time, seats, total: fare * seats.length });
+  writeJSON("se_bookings", bookings);
+
+  const paid = bookings[0];
+  picked.clear();
+  $("#name").value = "";
+  $("#phone").value = "";
+  renderSeats();
+  renderBookings();
+  say("Payment received.", "ok");
+  showReceipt(paid, phone);
+};
+
+function init() {
+  const price = r => (r.fare ? money(r.fare) : "fare TBC");
+  $("#route").innerHTML =
+    `<optgroup label="From Nairobi">` +
+    ROUTES.map(r => `<option value="Nairobi|${r.to}">Nairobi to ${r.to} · ${price(r)}</option>`).join("") +
+    `</optgroup><optgroup label="To Nairobi">` +
+    ROUTES.map(r => `<option value="${r.to}|Nairobi">${r.to} to Nairobi · ${price(r)}</option>`).join("") +
+    `</optgroup>`;
+  $("#time").innerHTML = TIMES.map(t => `<option>${t}</option>`).join("");
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  $("#date").min = $("#date").value = d.toISOString().slice(0, 10);
+  ["#route", "#date", "#time"].forEach(s => $(s).addEventListener("change", () => {
+    picked.clear();
+    say("");
+    $("#receipt").innerHTML = "";
+    renderSeats();
+  }));
+  renderSeats();
+  renderBookings();
+}
+
+function updatePochi() {
+  const isPochi = document.querySelector('input[name="method"]:checked').value === "Pochi la Biashara";
+  $("#pochi-box").hidden = !isPochi;
+  $("#pay").textContent = isPochi ? "I have paid with Pochi" : "Pay now";
+  if (isPochi) {
+    const fare = fareOf(trip());
+    const amount = fare && picked.size ? money(fare * picked.size) : "the total above";
+    $("#pochi-text").textContent = `Send ${amount} via M-Pesa to Pochi la Biashara: 0184286867`;
+  }
+}
+document.querySelectorAll('input[name="method"]').forEach(r => r.addEventListener("change", updatePochi));
+init();
+</script>
+</body>
+</html>
